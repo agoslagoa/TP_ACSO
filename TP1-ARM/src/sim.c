@@ -1,11 +1,28 @@
-#include <stdio.h>
-#include <assert.h>
-#include <string.h>
+#include "shell.h"
+#include "decode_core.h"
+#include "instruction.h"
 
-void process_instruction()
-{
-    /* execute one instruction here. You should use CURRENT_STATE and modify
-     * values in NEXT_STATE. You can call mem_read_32() and mem_write_32() to
-     * access memory. 
-     * */
+/*
+ * Fetches the instruction at the current PC, decodes it, and executes it.
+ * If the instruction does not modify the PC (e.g., branch), PC is incremented by 4.
+ * Ensures register X31 is always zero after execution.
+ */
+void process_instruction() {
+    instruction_t inst = {0};  // Initialize empty instruction
+
+    // Fetch instruction from memory
+    inst.value = mem_read_32(CURRENT_STATE.PC);
+
+    // Decode and execute if valid
+    if (decode(&inst)) {
+        execute(&inst);
+
+        // If PC was not modified by the instruction, increment by 4
+        if (NEXT_STATE.PC == CURRENT_STATE.PC) {
+            NEXT_STATE.PC += 4;
+        }
+    }
+
+    // Ensure X31 is always zero
+    NEXT_STATE.REGS[31] = 0;
 }
