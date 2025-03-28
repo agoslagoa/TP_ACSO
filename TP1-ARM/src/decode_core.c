@@ -86,7 +86,6 @@ void decode_cbz_cbnz(instruction_t* inst) {
 bool decode(instruction_t* inst) {
     uint32_t val = inst->value;
 
-    // Halt instruction
     if ((val & 0xFFFFFC00) == 0xD4400000) {
         printf("HLT instruction encountered. Halting simulation.\n");
         RUN_BIT = 0;
@@ -97,16 +96,18 @@ bool decode(instruction_t* inst) {
     inst->opcode = get_field(inst, 11, 21);
     for (int i = 0; i < 6; i++) {
         if (inst->opcode == OPCODE_LOAD_STORE[i]) {
+            printf("[decode] Load/Store: opcode = %#x, index = %d\n", inst->opcode, i);
             decode_load_store(inst);
             inst->operation_func = OPCODE_LOAD_STORE_FUNCS[i];
             return true;
         }
     }
 
-    // Group 2: Logical ops (offset 21, len 11)
+    // Group 2: Logical ops
     inst->opcode = get_field(inst, 11, 21);
     for (int i = 0; i < 3; i++) {
         if (inst->opcode == OPCODE_LOGIC[i]) {
+            printf("[decode] Logic: opcode = %#x, index = %d\n", inst->opcode, i);
             decode_logic(inst);
             inst->operation_func = OPCODE_LOGIC_FUNCS[i];
             return true;
@@ -117,6 +118,7 @@ bool decode(instruction_t* inst) {
     inst->opcode = get_field(inst, 11, 21);
     for (int i = 0; i < 4; i++) {
         if (inst->opcode == OPCODE_ARITH_REG[i]) {
+            printf("[decode] Arithmetic reg: opcode = %#x, index = %d\n", inst->opcode, i);
             decode_arith_reg(inst);
             inst->operation_func = OPCODE_ARITH_REG_FUNCS[i];
             return true;
@@ -127,6 +129,7 @@ bool decode(instruction_t* inst) {
     inst->opcode = get_field(inst, 10, 22);
     for (int i = 0; i < 3; i++) {
         if (inst->opcode == OPCODE_ARITH_IMM[i]) {
+            printf("[decode] Arithmetic imm: opcode = %#x, index = %d\n", inst->opcode, i);
             decode_arith_imm(inst);
             inst->operation_func = OPCODE_ARITH_IMM_FUNCS[i];
             return true;
@@ -136,6 +139,7 @@ bool decode(instruction_t* inst) {
     // Group 5: Shift
     inst->opcode = get_field(inst, 10, 22);
     if (inst->opcode == OPCODE_SHIFT[0]) {
+        printf("[decode] Shift: opcode = %#x\n", inst->opcode);
         decode_shift(inst);
         inst->operation_func = OPCODE_SHIFT_FUNCS[0];
         return true;
@@ -144,6 +148,7 @@ bool decode(instruction_t* inst) {
     // Group 6: Branch
     inst->opcode = get_field(inst, 6, 26);
     if (inst->opcode == OPCODE_BRANCH[0]) {
+        printf("[decode] Branch (unconditional): opcode = %#x\n", inst->opcode);
         decode_branch(inst);
         inst->operation_func = OPCODE_BRANCH_FUNCS[0];
         return true;
@@ -152,6 +157,7 @@ bool decode(instruction_t* inst) {
     // Group 7: Branch reg
     inst->opcode = get_field(inst, 22, 0);
     if (inst->opcode == OPCODE_BRANCH_REG[0]) {
+        printf("[decode] Branch register: opcode = %#x\n", inst->opcode);
         decode_branch_reg(inst);
         inst->operation_func = OPCODE_BRANCH_REG_FUNCS[0];
         return true;
@@ -160,6 +166,7 @@ bool decode(instruction_t* inst) {
     // Group 8: b.cond
     inst->opcode = get_field(inst, 8, 24);
     if (inst->opcode == OPCODE_BRANCH_COND[0]) {
+        printf("[decode] Conditional branch: opcode = %#x\n", inst->opcode);
         decode_bcond(inst);
         inst->operation_func = OPCODE_BRANCH_COND_FUNCS[0];
         return true;
@@ -168,6 +175,7 @@ bool decode(instruction_t* inst) {
     // Group 9: MOVZ
     inst->opcode = get_field(inst, 11, 21);
     if (inst->opcode == OPCODE_MOVE_IMM[0]) {
+        printf("[decode] Move immediate (MOVZ): opcode = %#x\n", inst->opcode);
         decode_movz(inst);
         inst->operation_func = OPCODE_MOVE_IMM_FUNCS[0];
         return true;
@@ -177,6 +185,7 @@ bool decode(instruction_t* inst) {
     inst->opcode = get_field(inst, 8, 24);
     for (int i = 0; i < 2; i++) {
         if (inst->opcode == OPCODE_CMP_BRANCH[i]) {
+            printf("[decode] Compare and branch: opcode = %#x, index = %d\n", inst->opcode, i);
             decode_cbz_cbnz(inst);
             inst->operation_func = OPCODE_CMP_BRANCH_FUNCS[i];
             return true;
