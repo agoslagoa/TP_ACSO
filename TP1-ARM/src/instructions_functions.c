@@ -46,19 +46,36 @@ void arithmetic_operation(instruction_t* inst, int64_t (*operation)(int64_t, int
 // ──────────────────────────────────────────────────────────────── ARITHMETIC ──────
 //
 
-void add_registers(instruction_t* inst)        { arithmetic_operation(inst, op_add); }
-void sub_registers(instruction_t* inst)        { arithmetic_operation(inst, op_sub); }
 void adds_registers(instruction_t* inst)       { arithmetic_operation(inst, op_add); }
 void subs_registers(instruction_t* inst)       { arithmetic_operation(inst, op_sub); }
-void add_immediate(instruction_t* inst)        { arithmetic_operation(inst, op_add); }
 void adds_immediate(instruction_t* inst)       { arithmetic_operation(inst, op_add); }
 void subs_immediate(instruction_t* inst)       { arithmetic_operation(inst, op_sub); }
+
+void add_registers(instruction_t* inst) {
+    int64_t operand1 = CURRENT_STATE.REGS[inst->Rn];
+    int64_t operand2 = CURRENT_STATE.REGS[inst->Rm];
+    NEXT_STATE.REGS[inst->Rd] = operand1 + operand2;
+    set_x31();
+}
+
+void sub_registers(instruction_t* inst) {
+    int64_t operand1 = CURRENT_STATE.REGS[inst->Rn];
+    int64_t operand2 = CURRENT_STATE.REGS[inst->Rm];
+    NEXT_STATE.REGS[inst->Rd] = operand1 - operand2;
+    set_x31();
+}
+
+void add_immediate(instruction_t* inst) {
+    int64_t operand1 = CURRENT_STATE.REGS[inst->Rn];
+    int64_t operand2 = (inst->shift == 0b01) ? (inst->immr << 12) : inst->immr;
+    NEXT_STATE.REGS[inst->Rd] = operand1 + operand2;
+    set_x31();
+}
 
 void multiply(instruction_t* inst) {
     NEXT_STATE.REGS[inst->Rd] = NEXT_STATE.REGS[inst->Rn] * NEXT_STATE.REGS[inst->Rm];
     set_x31();
 }
-
 
 //
 // ──────────────────────────────────────────────────────────────── LOGIC ──────
