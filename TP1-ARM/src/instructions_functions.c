@@ -59,6 +59,7 @@ void multiply(instruction_t* inst) {
     set_x31();
 }
 
+
 //
 // ──────────────────────────────────────────────────────────────── LOGIC ──────
 //
@@ -83,17 +84,19 @@ void orr_registers(instruction_t* inst) {
 // ──────────────────────────────────────────────────────────────── SHIFT ──────
 //
 
-void shift(instruction_t* inst, uint32_t shift_type) {
-    uint32_t shift = 64 - (uint32_t) inst->immr;
 
-    if (shift_type == 0b111111) {
+void shift(instruction_t* inst, uint32_t shift_type) {
+    uint32_t shift = (uint32_t) inst->immr;
+
+    if (shift_type == 1) {  // LSR
         NEXT_STATE.REGS[inst->Rd] = NEXT_STATE.REGS[inst->Rn] >> shift;
-    } else {
+    } else if (shift_type == 0) {  // LSL
         NEXT_STATE.REGS[inst->Rd] = NEXT_STATE.REGS[inst->Rn] << shift;
     }
 
     set_x31();
 }
+
 
 void logical_shift(instruction_t* inst) {
     shift(inst, inst->imms);
@@ -172,18 +175,18 @@ void branch_register(instruction_t* inst) {
 }
 
 void conditional_branch(instruction_t* inst) {
-    bool condition_met = false;
+    bool cond_x = false;
 
     switch (inst->cond) {
-        case 0:  condition_met = CURRENT_STATE.FLAG_Z; break;                 // EQ
-        case 1:  condition_met = !CURRENT_STATE.FLAG_Z; break;                // NE
-        case 10: condition_met = !CURRENT_STATE.FLAG_N; break;                // GE
-        case 11: condition_met = CURRENT_STATE.FLAG_N && !CURRENT_STATE.FLAG_Z; break; // LT
-        case 12: condition_met = !CURRENT_STATE.FLAG_Z && !CURRENT_STATE.FLAG_N; break; // GT
-        case 13: condition_met = CURRENT_STATE.FLAG_N; break;                 // LE
+        case 0:  cond_x = CURRENT_STATE.FLAG_Z; break;                 // EQ
+        case 1:  cond_x = !CURRENT_STATE.FLAG_Z; break;                // NE
+        case 10: cond_x = !CURRENT_STATE.FLAG_N; break;                // GE
+        case 11: cond_x = CURRENT_STATE.FLAG_N && !CURRENT_STATE.FLAG_Z; break; // LT
+        case 12: cond_x = !CURRENT_STATE.FLAG_Z && !CURRENT_STATE.FLAG_N; break; // GT
+        case 13: cond_x = CURRENT_STATE.FLAG_N; break;                 // LE
     }
 
-    if (condition_met) {
+    if (cond_x) {
         NEXT_STATE.PC += inst->immr - 4;
     }
 }

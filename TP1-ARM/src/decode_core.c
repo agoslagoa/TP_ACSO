@@ -1,174 +1,198 @@
 #include "decode_core.h"
+#include "instruction.h"
 #include "opcodes.h"
 #include "shell.h"
-#include "instruction.h"
+#include <stdint.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <stdbool.h>
 
-//
-// ──────────────────────────────────────────────────────── UTILITY MASK FUNCTIONS ─────
-//
-
-uint32_t generate_mask(uint8_t len, uint8_t move_left) {
-    return ((1U << len) - 1) << move_left;
+uint32_t create_mask(uint8_t length, uint8_t shift) {
+    return ((1U << length) - 1) << shift;
 }
 
-uint32_t apply_mask(instruction_t* inst, uint32_t mask, uint8_t move_right) {
-    return (inst->value & mask) >> move_right;
+uint32_t extract_bits(uint32_t instr, uint8_t length, uint8_t shift) {
+    return (instr & create_mask(length, shift)) >> shift;
 }
 
-uint32_t get_values(instruction_t* inst, uint8_t move, uint16_t amount_ones) {
-    return apply_mask(inst, generate_mask(amount_ones, move), move);
+uint32_t get_field(instruction_t* inst, uint8_t length, uint8_t shift) {
+    return extract_bits(inst->value, length, shift);
 }
 
-//
-// ──────────────────────────────────────────────────────────── FIELD EXTRACTION ─────
-//
+// ───────────────────────────── FORMATS DECODING ─────────────────────────────
 
-void extract_base_register(instruction_t* inst) {
-    inst->Rn = get_values(inst, 5, 5);
+void decode_load_store(instruction_t* inst) {
+    inst->Rn = get_field(inst, 5, 5);
+    inst->Rd = get_field(inst, 5, 0);
+    int64_t val = get_field(inst, 9, 12);
+    inst->immr = ((int64_t)(val << (64 - 9))) >> (64 - 9);
 }
 
-void extract_destination_register(instruction_t* inst) {
-    inst->Rd = get_values(inst, 0, 5);
+void decode_logic(instruction_t* inst) {
+    inst->Rm = get_field(inst, 5, 16);
+    inst->Rn = get_field(inst, 5, 5);
+    inst->Rd = get_field(inst, 5, 0);
 }
 
-void extract_second_register(instruction_t* inst) {
-    inst->Rm = get_values(inst, 16, 5);
+void decode_arith_reg(instruction_t* inst) {
+    inst->Rm = get_field(inst, 5, 16);
+    inst->Rn = get_field(inst, 5, 5);
+    inst->Rd = get_field(inst, 5, 0);
 }
 
-void extract_signed_immediate(instruction_t* inst, uint8_t move_left, uint8_t len) {
-    int64_t value = get_values(inst, move_left, len);
-    uint8_t shift = 64 - len;
-    value = value << shift;
-    inst->immr = value >> shift;
+void decode_arith_imm(instruction_t* inst) {
+    inst->Rd = get_field(inst, 5, 0);
+    inst->Rn = get_field(inst, 5, 5);
+    inst->immr = get_field(inst, 12, 10);
+    inst->shift = get_field(inst, 2, 22);
 }
 
-void extract_unsigned_immediate(instruction_t* inst, uint8_t move_left, uint8_t len) {
-    inst->immr = get_values(inst, move_left, len);
+void decode_shift(instruction_t* inst) {
+    inst->Rd = get_field(inst, 5, 0);
+    inst->Rn = get_field(inst, 5, 5);
+    inst->immr = get_field(inst, 6, 16);
+    inst->imms = get_field(inst, 6, 10);
 }
 
-void extract_shift_amount(instruction_t* inst) {
-    inst->shift = get_values(inst, 22, 2);
-}
-
-void apply_branch_shift(instruction_t* inst) {
+void decode_branch(instruction_t* inst) {
+    int32_t offset = get_field(inst, 26, 0);
+    inst->immr = ((int64_t)(offset << (64 - 26))) >> (64 - 26);
     inst->immr <<= 2;
 }
 
-//
-// ────────────────────────────────────────────────────────────── INSTRUCTION FORMATS ─────
-//
-
-void format_load_store(instruction_t* inst) {
-    extract_base_register(inst);
-    extract_destination_register(inst);
-    extract_signed_immediate(inst, 12, 9);
+void decode_branch_reg(instruction_t* inst) {
+    inst->Rn = get_field(inst, 5, 5);
 }
 
-void format_three_registers(instruction_t* inst) {
-    extract_second_register(inst);
-    extract_base_register(inst);
-    extract_destination_register(inst);
+void decode_bcond(instruction_t* inst) {
+    int32_t offset = get_field(inst, 19, 5);
+    inst->immr = ((int64_t)(offset << (64 - 19))) >> (64 - 19);
+    inst->immr <<= 2;
+    inst->cond = get_field(inst, 4, 0);
 }
 
-void format_immediate_arithmetic(instruction_t* inst) {
-    extract_destination_register(inst);
-    extract_base_register(inst);
-    extract_unsigned_immediate(inst, 10, 12);
-    extract_shift_amount(inst);
+void decode_movz(instruction_t* inst) {
+    inst->Rd = get_field(inst, 5, 0);
+    inst->immr = get_field(inst, 16, 5);
 }
 
-void format_shift(instruction_t* inst) {
-    extract_destination_register(inst);
-    extract_base_register(inst);
-    extract_unsigned_immediate(inst, 16, 6);
-    inst->imms = get_values(inst, 10, 6);
+void decode_cbz_cbnz(instruction_t* inst) {
+    inst->Rd = get_field(inst, 5, 0);
+    int32_t offset = get_field(inst, 19, 5);
+    inst->immr = ((int64_t)(offset << (64 - 19))) >> (64 - 19);
+    inst->immr <<= 2;
 }
 
-void format_unconditional_branch(instruction_t* inst) {
-    extract_signed_immediate(inst, 0, 26);
-    apply_branch_shift(inst);
-}
-
-void format_branch_register(instruction_t* inst) {
-    extract_base_register(inst);
-}
-
-void format_conditional_branch(instruction_t* inst) {
-    extract_signed_immediate(inst, 5, 19);
-    apply_branch_shift(inst);
-    inst->cond = get_values(inst, 0, 4);
-}
-
-void format_move_immediate(instruction_t* inst) {
-    extract_destination_register(inst);
-    extract_unsigned_immediate(inst, 5, 16);
-}
-
-void format_compare_and_branch(instruction_t* inst) {
-    extract_destination_register(inst);
-    extract_signed_immediate(inst, 5, 19);
-    apply_branch_shift(inst);
-}
-
-//
-// ────────────────────────────────────────────────────────────── SETUP & EXECUTION ─────
-//
-
-void set_parameters(instruction_t* inst, uint8_t opcode_type) {
-    switch(opcode_type) {
-        case 1:  format_load_store(inst);         break;
-        case 2:  format_three_registers(inst);    break;
-        case 3:  format_three_registers(inst);    break;
-        case 4:  format_immediate_arithmetic(inst); break;
-        case 5:  format_shift(inst);              break;
-        case 6:  format_unconditional_branch(inst); break;
-        case 7:  format_branch_register(inst);    break;
-        case 8:  format_conditional_branch(inst); break;
-        case 9:  format_move_immediate(inst);     break;
-        case 10: format_compare_and_branch(inst); break;
-    }
-}
-
-bool set_instruction(instruction_t* inst, int32_t possible_opcodes[], uint8_t amount_op, FunctionPtr* type_functions, uint8_t type) {
-    for (uint8_t i = 0; i < amount_op; i++) {
-        if (inst->opcode == possible_opcodes[i]) {
-            set_parameters(inst, type);
-            inst->operation_func = type_functions[i];
-            return true;
-        }
-    }
-
-    return false;
-}
+// ───────────────────────────── DECODING LOGIC ─────────────────────────────
 
 bool decode(instruction_t* inst) {
-    if (inst->value == 0xD4400000) {
+    uint32_t val = inst->value;
+
+    // Halt instruction
+    if ((val & 0xFFFFFC00) == 0xD4400000) {
+        printf("HLT instruction encountered. Halting simulation.\n");
         RUN_BIT = 0;
         return false;
     }
-    for (uint8_t i = 0; i < 10; i++) {
-        inst->opcode = get_values(inst, opcode_offsets[i], opcode_lens[i]);
-        printf("Checking opcode (type %d): extracted = %x\n", i, inst->opcode);
-        printf("Instruction value: 0x%08X\n", inst->value);
 
-        if (set_instruction(inst, (int32_t*) opcodes_types[i], type_amounts[i], type_functions[i], i + 1)) {
+    // Group 1: Load/store (offset 21, len 11)
+    inst->opcode = get_field(inst, 11, 21);
+    for (int i = 0; i < 6; i++) {
+        if (inst->opcode == OPCODE_LOAD_STORE[i]) {
+            decode_load_store(inst);
+            inst->operation_func = OPCODE_LOAD_STORE_FUNCS[i];
             return true;
         }
     }
 
+    // Group 2: Logical ops (offset 21, len 11)
+    inst->opcode = get_field(inst, 11, 21);
+    for (int i = 0; i < 3; i++) {
+        if (inst->opcode == OPCODE_LOGIC[i]) {
+            decode_logic(inst);
+            inst->operation_func = OPCODE_LOGIC_FUNCS[i];
+            return true;
+        }
+    }
+
+    // Group 3: Arithmetic reg
+    inst->opcode = get_field(inst, 11, 21);
+    for (int i = 0; i < 4; i++) {
+        if (inst->opcode == OPCODE_ARITH_REG[i]) {
+            decode_arith_reg(inst);
+            inst->operation_func = OPCODE_ARITH_REG_FUNCS[i];
+            return true;
+        }
+    }
+
+    // Group 4: Arithmetic imm
+    inst->opcode = get_field(inst, 10, 22);
+    for (int i = 0; i < 3; i++) {
+        if (inst->opcode == OPCODE_ARITH_IMM[i]) {
+            decode_arith_imm(inst);
+            inst->operation_func = OPCODE_ARITH_IMM_FUNCS[i];
+            return true;
+        }
+    }
+
+    // Group 5: Shift
+    inst->opcode = get_field(inst, 10, 22);
+    if (inst->opcode == OPCODE_SHIFT[0]) {
+        decode_shift(inst);
+        inst->operation_func = OPCODE_SHIFT_FUNCS[0];
+        return true;
+    }
+
+    // Group 6: Branch
+    inst->opcode = get_field(inst, 6, 26);
+    if (inst->opcode == OPCODE_BRANCH[0]) {
+        decode_branch(inst);
+        inst->operation_func = OPCODE_BRANCH_FUNCS[0];
+        return true;
+    }
+
+    // Group 7: Branch reg
+    inst->opcode = get_field(inst, 22, 0);
+    if (inst->opcode == OPCODE_BRANCH_REG[0]) {
+        decode_branch_reg(inst);
+        inst->operation_func = OPCODE_BRANCH_REG_FUNCS[0];
+        return true;
+    }
+
+    // Group 8: b.cond
+    inst->opcode = get_field(inst, 8, 24);
+    if (inst->opcode == OPCODE_BRANCH_COND[0]) {
+        decode_bcond(inst);
+        inst->operation_func = OPCODE_BRANCH_COND_FUNCS[0];
+        return true;
+    }
+
+    // Group 9: MOVZ
+    inst->opcode = get_field(inst, 11, 21);
+    if (inst->opcode == OPCODE_MOVE_IMM[0]) {
+        decode_movz(inst);
+        inst->operation_func = OPCODE_MOVE_IMM_FUNCS[0];
+        return true;
+    }
+
+    // Group 10: CBZ/CBNZ
+    inst->opcode = get_field(inst, 8, 24);
+    for (int i = 0; i < 2; i++) {
+        if (inst->opcode == OPCODE_CMP_BRANCH[i]) {
+            decode_cbz_cbnz(inst);
+            inst->operation_func = OPCODE_CMP_BRANCH_FUNCS[i];
+            return true;
+        }
+    }
+
+    printf("Unknown instruction: 0x%08X\n", inst->value);
     RUN_BIT = 0;
-    printf("Error: Unknown instruction, halting execution.\n");
     return false;
 }
 
 
 void execute(instruction_t* inst) {
-    if (inst->operation_func != NULL) {
+    if (inst->operation_func) {
         inst->operation_func(inst);
     } else {
-        printf("Error: Trying to execute an undefined instruction.\n");
+        printf("No function associated with instruction.\n");
     }
 }

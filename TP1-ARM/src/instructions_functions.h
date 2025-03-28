@@ -2,36 +2,32 @@
 #define INSTRUCTION_FUNCTIONS_H
 
 #include <stdint.h>
-#include "instruction.h"
+#include <stdbool.h>
+#include "decode_core.h"
 #include "shell.h"
 
 //
-// ──────────────────────────────────────────────────────────────── FLAGS & UTILS ──────
+// ───────────────────────────── FLAGS & UTILS ─────────────────────────────
 //
 
 void change_flags(int64_t result);
-void set_x31();  // Ensures register X31 is always 0
+void set_x31();
 
 //
-// ──────────────────────────────────────────────────────────────── ARITHMETIC ──────
+// ───────────────────────────── ARITHMETIC ────────────────────────────────
 //
 
-// Register
 void add_registers(instruction_t* inst);
 void sub_registers(instruction_t* inst);
 void adds_registers(instruction_t* inst);
 void subs_registers(instruction_t* inst);
-
-// Immediate
 void add_immediate(instruction_t* inst);
 void adds_immediate(instruction_t* inst);
 void subs_immediate(instruction_t* inst);
-
-// Extended
 void multiply(instruction_t* inst);
 
 //
-// ──────────────────────────────────────────────────────────────── LOGICAL OPS ──────
+// ───────────────────────────── LOGICAL OPS ───────────────────────────────
 //
 
 void ands_registers(instruction_t* inst);
@@ -39,42 +35,37 @@ void eor_registers(instruction_t* inst);
 void orr_registers(instruction_t* inst);
 
 //
-// ──────────────────────────────────────────────────────────────── SHIFT ──────
+// ───────────────────────────── SHIFT ─────────────────────────────────────
 //
 
 void logical_shift(instruction_t* inst);
 
 //
-// ──────────────────────────────────────────────────────────────── MEMORY ──────
+// ───────────────────────────── MEMORY ────────────────────────────────────
 //
 
-// Load
 void load_word(instruction_t* inst);
 void load_byte(instruction_t* inst);
 void load_half(instruction_t* inst);
-
-// Store
 void store_word(instruction_t* inst);
 void store_byte(instruction_t* inst);
 void store_half(instruction_t* inst);
 void store_n_bits(instruction_t* inst, uint8_t n);
 
 //
-// ──────────────────────────────────────────────────────────────── MOVE ──────
+// ───────────────────────────── MOVE ──────────────────────────────────────
 //
 
 void move_zero(instruction_t* inst);
 
 //
-// ──────────────────────────────────────────────────────────────── BRANCH ──────
+// ───────────────────────────── BRANCH ────────────────────────────────────
 //
 
-// Unconditional / Register
 void branch(instruction_t* inst);
 void branch_unconditional(instruction_t* inst);
 void branch_register(instruction_t* inst);
 
-// Conditional
 void branch_conditional(instruction_t* inst);
 void conditional_branch(instruction_t* inst);
 void conditional_branch_zero(instruction_t* inst);

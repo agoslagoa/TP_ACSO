@@ -1,4 +1,4 @@
-#include "instruction.h"
+#include "decode_core.h"
 #include "instructions_functions.h"
 
 // ────── LOAD/STORE INSTRUCTIONS ────────────────────────────────────────────
@@ -122,7 +122,7 @@ uint8_t opcode_lens[] = {
     11, // LOAD/STORE
     8,  // LOGIC (fix)
     11, // ARITH REG
-    10,  // ARITH IMM (fix)
+    10,  // ARITH IMM 
     10, // SHIFT
     6,  // BRANCH
     22, // BRANCH REG
@@ -142,19 +142,6 @@ uint8_t type_amounts[] = {
     1, // BRANCH COND
     1, // MOVE IMM
     2  // CMP & BRANCH
-};
-
-uint8_t opcode_offsets[] = {
-    21, // LOAD/STORE
-    21, // LOGIC
-    21, // ARITH REG
-    22, // ARITH IMM
-    22, // SHIFT
-    26, // BRANCH
-    0,  // BRANCH REG
-    24, // BRANCH COND
-    21, // MOVE IMM
-    24  // CMP & BRANCH
 };
 
 FunctionPtr* type_functions[] = {
