@@ -84,6 +84,7 @@ void decode_cbz_cbnz(instruction_t* inst) {
 // ───────────────────────────── DECODING LOGIC ─────────────────────────────
 
 bool decode(instruction_t* inst) {
+
     uint32_t val = inst->value;
 
     if ((val & 0xFFFFFC00) == 0xD4400000) {
