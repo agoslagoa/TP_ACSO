@@ -1,4 +1,4 @@
-los haces? #include "decode_core.h"
+#include "decode_core.h"
 #include "opcodes.h"
 #include "shell.h"
 #include <stdint.h>
