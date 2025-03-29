@@ -1,6 +1,5 @@
 #include "shell.h"
 #include "decode_core.h"
-#include "instruction.h"
 
 /*
  * Fetches the instruction at the current PC, decodes it, and executes it.

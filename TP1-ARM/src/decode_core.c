@@ -1,5 +1,4 @@
 #include "decode_core.h"
-#include "instruction.h"
 #include "opcodes.h"
 #include "shell.h"
 #include <stdint.h>
