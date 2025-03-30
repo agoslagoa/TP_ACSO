@@ -24,10 +24,31 @@ uint64_t execute(const Instruction* inst) {
         set_flags(result);
     }
 
+    else if (strcmp(inst->name, "ADDS_EXT") == 0) {
+        int64_t result = CURRENT_STATE.REGS[inst->Rn] + CURRENT_STATE.REGS[inst->Rm];
+        NEXT_STATE.REGS[inst->Rd] = result;
+        set_flags(result);
+    }
+
     else if (strcmp(inst->name, "SUBS_EXT") == 0) {
         int64_t result = CURRENT_STATE.REGS[inst->Rn] - CURRENT_STATE.REGS[inst->Rm];
         NEXT_STATE.REGS[inst->Rd] = result;
         set_flags(result);
+    }
+
+    else if (strcmp(inst->name, "CMP") == 0) {
+        int64_t result = CURRENT_STATE.REGS[inst->Rn] - CURRENT_STATE.REGS[inst->Rm];
+        set_flags(result);
+    }
+
+    else if (strcmp(inst->name, "CMP_IMM") == 0) {
+        int64_t imm = (inst->shift == 1) ? (inst->imm << 12) : inst->imm;
+        int64_t result = CURRENT_STATE.REGS[inst->Rn] - imm;
+        set_flags(result);
+    }
+
+    else if (strcmp(inst->name, "MUL") == 0) {
+        NEXT_STATE.REGS[inst->Rd] = CURRENT_STATE.REGS[inst->Rn] * CURRENT_STATE.REGS[inst->Rm];
     }
 
     else if (strcmp(inst->name, "MOVZ") == 0) {

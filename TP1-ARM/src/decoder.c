@@ -20,6 +20,32 @@ void extract_adds_imm(Instruction* inst, uint32_t raw) {
     inst->shift = (raw >> 22) & 0x3;
 }
 
+void extract_adds_ext(Instruction* inst, uint32_t raw) {
+    inst->Rd = raw & 0x1F;
+    inst->Rn = (raw >> 5) & 0x1F;
+    inst->Rm = (raw >> 16) & 0x1F;
+}
+
+void extract_cmp(Instruction* inst, uint32_t raw) {
+    inst->Rn = (raw >> 5) & 0x1F;
+    inst->Rm = (raw >> 16) & 0x1F;
+    inst->Rd = 31;  // XZR
+}
+
+void extract_cmp_imm(Instruction* inst, uint32_t raw) {
+    inst->Rn = (raw >> 5) & 0x1F;
+    inst->imm = (raw >> 10) & 0xFFF;
+    inst->shift = (raw >> 22) & 0x3;
+    inst->Rd = 31;  // XZR
+}
+
+void extract_mul(Instruction* inst, uint32_t raw) {
+    inst->Rd = raw & 0x1F;
+    inst->Rn = (raw >> 5) & 0x1F;
+    inst->Rm = (raw >> 16) & 0x1F;
+}
+
+
 void extract_subs_ext(Instruction* inst, uint32_t raw) {
     inst->Rd = raw & 0x1F;
     inst->Rn = (raw >> 5) & 0x1F;
@@ -125,6 +151,9 @@ Pattern patterns[] = {
     ENTRY(0xFFC00000, 0x91000000, "ADDI",   extract_add_imm),
     ENTRY(0xFFE00000, 0xCB000000, "SUB",    extract_sub_reg),
     ENTRY(0xFFC00000, 0xD1000000, "SUBI",   extract_sub_imm),
+    ENTRY(0xFFE0FC00, 0x9B007C00, "MUL", extract_mul),               // 10011011000
+    ENTRY(0xFFE0001F, 0xEB00001F, "CMP", extract_cmp),               // CMP es SUBS con Rd = XZR
+    ENTRY(0xFFC0001F, 0xF100001F, "CMP_IMM", extract_cmp_imm),       // CMP inmediato con Rd = XZR
     ENTRY(0xFFE0FC00, 0xF2000000, "ANDS", extract_logic_reg), // 11101010000
     ENTRY(0xFFE0FC00, 0xD2000000, "EOR",  extract_logic_reg), // 11001010000
     ENTRY(0xFFE0FC00, 0xAA000000, "ORR",  extract_logic_reg), // 10101010000
@@ -140,6 +169,7 @@ Pattern patterns[] = {
     ENTRY(0xFFC00000, 0xF8000000, "STUR",   extract_ldst),   // 11111000000
     ENTRY(0xFFC00000, 0x38000000, "STURB",  extract_ldst),   // 00111000000
     ENTRY(0xFFC00000, 0x78000000, "STURH",  extract_ldst),   // 01111000000
+    ENTRY(0xFFE00000, 0x8B200000, "ADDS_EXT", extract_adds_ext),
 };
 
 const int NUM_PATTERNS = sizeof(patterns) / sizeof(Pattern);
