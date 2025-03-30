@@ -62,7 +62,7 @@ uint64_t execute(const Instruction* inst) {
     else if (strcmp(inst->name, "MUL") == 0) {
         NEXT_STATE.REGS[inst->Rd] = CURRENT_STATE.REGS[inst->Rn] * CURRENT_STATE.REGS[inst->Rm];
     } else if (strcmp(inst->name, "MOVZ") == 0) {
-        NEXT_STATE.REGS[inst->Rd] = inst->imm;
+        NEXT_STATE.REGS[inst->Rd] = ((uint64_t)inst->imm) << inst->shift;
     } else if (strcmp(inst->name, "ADD") == 0) {
         NEXT_STATE.REGS[inst->Rd] = CURRENT_STATE.REGS[inst->Rn] + CURRENT_STATE.REGS[inst->Rm];
     } else if (strcmp(inst->name, "ADDI") == 0) {

@@ -85,6 +85,8 @@ void extract_subs_ext(Instruction* inst, uint32_t raw) {
 void extract_movz(Instruction* inst, uint32_t raw) {
     inst->Rd = raw & 0x1F;
     inst->imm = (raw >> 5) & 0xFFFF;
+    uint8_t hw = (raw >> 21) & 0x3;  
+    inst->shift = hw * 16;
 }
 
 /**
@@ -211,7 +213,7 @@ Pattern patterns[] = {
     ENTRY(0xFFC00000, 0xF1000000, "SUBS_IMM", extract_adds_imm), 
     ENTRY(0xFFE00000, 0x8B200000, "ADDS_EXT", extract_adds_ext),
     ENTRY(0xFFE00000, 0xEB000000, "SUBS_EXT", extract_subs_ext),
-    ENTRY(0xFFE00000, 0xD2800000, "MOVZ",     extract_movz),
+    ENTRY(0xFF800000, 0xD2800000, "MOVZ", extract_movz),
     ENTRY(0xFC000000, 0x14000000, "B",        extract_b),
     ENTRY(0xFFE00000, 0x8B000000, "ADD",      extract_add_reg),
     ENTRY(0xFFC00000, 0x91000000, "ADDI",     extract_add_imm),
