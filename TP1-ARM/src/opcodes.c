@@ -104,3 +104,68 @@ FunctionPtr OPCODE_CMP_BRANCH_FUNCS[] = {
     compare_and_branch_zero, compare_and_branch_nonzero
 };
 
+// ────── LOOKUP TABLES ──────────────────────────────────────────────────────
+uint32_t* opcodes_types[] = {
+    OPCODE_LOAD_STORE,
+    OPCODE_LOGIC,
+    OPCODE_ARITH_REG,
+    OPCODE_ARITH_IMM,
+    OPCODE_SHIFT,
+    OPCODE_BRANCH,
+    OPCODE_BRANCH_REG,
+    OPCODE_BRANCH_COND,
+    OPCODE_MOVE_IMM,
+    OPCODE_CMP_BRANCH
+};
+
+uint8_t opcode_lens[] = {
+    11, // LOAD/STORE
+    8,  // LOGIC (fix)
+    11, // ARITH REG
+    10,  // ARITH IMM (fix)
+    10, // SHIFT
+    6,  // BRANCH
+    22, // BRANCH REG
+    8,  // BRANCH COND
+    11, // MOVE IMM
+    8   // CMP & BRANCH
+};
+
+uint8_t type_amounts[] = {
+    6, // LOAD/STORE
+    3, // LOGIC
+    4, // ARITH REG
+    3, // ARITH IMM
+    1, // SHIFT
+    1, // BRANCH
+    1, // BRANCH REG
+    1, // BRANCH COND
+    1, // MOVE IMM
+    2  // CMP & BRANCH
+};
+
+uint8_t opcode_offsets[] = {
+    21, // LOAD/STORE
+    21, // LOGIC
+    21, // ARITH REG
+    22, // ARITH IMM
+    22, // SHIFT
+    26, // BRANCH
+    0,  // BRANCH REG
+    24, // BRANCH COND
+    21, // MOVE IMM
+    24  // CMP & BRANCH
+};
+
+FunctionPtr* type_functions[] = {
+    OPCODE_LOAD_STORE_FUNCS,
+    OPCODE_LOGIC_FUNCS,
+    OPCODE_ARITH_REG_FUNCS,
+    OPCODE_ARITH_IMM_FUNCS,
+    OPCODE_SHIFT_FUNCS,
+    OPCODE_BRANCH_FUNCS,
+    OPCODE_BRANCH_REG_FUNCS,
+    OPCODE_BRANCH_COND_FUNCS,
+    OPCODE_MOVE_IMM_FUNCS,
+    OPCODE_CMP_BRANCH_FUNCS
+};

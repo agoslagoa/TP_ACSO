@@ -31,4 +31,12 @@ extern FunctionPtr OPCODE_BRANCH_COND_FUNCS[];
 extern FunctionPtr OPCODE_MOVE_IMM_FUNCS[];
 extern FunctionPtr OPCODE_CMP_BRANCH_FUNCS[];
 
+// ────── LOOKUP TABLES ──────────────────────────────────────────────────────
+
+extern uint32_t* opcodes_types[];
+extern uint8_t opcode_lens[];
+extern uint8_t opcode_offsets[];
+extern uint8_t type_amounts[];
+extern FunctionPtr* type_functions[];
+
 #endif // OPCODES_H

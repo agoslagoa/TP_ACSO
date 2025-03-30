@@ -46,31 +46,13 @@ void arithmetic_operation(instruction_t* inst, int64_t (*operation)(int64_t, int
 // ──────────────────────────────────────────────────────────────── ARITHMETIC ──────
 //
 
+void add_registers(instruction_t* inst)        { arithmetic_operation(inst, op_add); }
+void sub_registers(instruction_t* inst)        { arithmetic_operation(inst, op_sub); }
 void adds_registers(instruction_t* inst)       { arithmetic_operation(inst, op_add); }
 void subs_registers(instruction_t* inst)       { arithmetic_operation(inst, op_sub); }
+void add_immediate(instruction_t* inst)        { arithmetic_operation(inst, op_add); }
 void adds_immediate(instruction_t* inst)       { arithmetic_operation(inst, op_add); }
 void subs_immediate(instruction_t* inst)       { arithmetic_operation(inst, op_sub); }
-
-void add_registers(instruction_t* inst) {
-    int64_t operand1 = CURRENT_STATE.REGS[inst->Rn];
-    int64_t operand2 = CURRENT_STATE.REGS[inst->Rm];
-    NEXT_STATE.REGS[inst->Rd] = operand1 + operand2;
-    set_x31();
-}
-
-void sub_registers(instruction_t* inst) {
-    int64_t operand1 = CURRENT_STATE.REGS[inst->Rn];
-    int64_t operand2 = CURRENT_STATE.REGS[inst->Rm];
-    NEXT_STATE.REGS[inst->Rd] = operand1 - operand2;
-    set_x31();
-}
-
-void add_immediate(instruction_t* inst) {
-    int64_t operand1 = CURRENT_STATE.REGS[inst->Rn];
-    int64_t operand2 = (inst->shift == 0b01) ? (inst->immr << 12) : inst->immr;
-    NEXT_STATE.REGS[inst->Rd] = operand1 + operand2;
-    set_x31();
-}
 
 void multiply(instruction_t* inst) {
     NEXT_STATE.REGS[inst->Rd] = NEXT_STATE.REGS[inst->Rn] * NEXT_STATE.REGS[inst->Rm];
@@ -101,19 +83,17 @@ void orr_registers(instruction_t* inst) {
 // ──────────────────────────────────────────────────────────────── SHIFT ──────
 //
 
-
 void shift(instruction_t* inst, uint32_t shift_type) {
-    uint32_t shift = (uint32_t) inst->immr;
+    uint32_t shift = 64 - (uint32_t) inst->immr;
 
-    if (shift_type == 1) {  // LSR
+    if (shift_type == 0b111111) {
         NEXT_STATE.REGS[inst->Rd] = NEXT_STATE.REGS[inst->Rn] >> shift;
-    } else if (shift_type == 0) {  // LSL
+    } else {
         NEXT_STATE.REGS[inst->Rd] = NEXT_STATE.REGS[inst->Rn] << shift;
     }
 
     set_x31();
 }
-
 
 void logical_shift(instruction_t* inst) {
     shift(inst, inst->imms);
@@ -192,18 +172,18 @@ void branch_register(instruction_t* inst) {
 }
 
 void conditional_branch(instruction_t* inst) {
-    bool cond_x = false;
+    bool condition_met = false;
 
     switch (inst->cond) {
-        case 0:  cond_x = CURRENT_STATE.FLAG_Z; break;                 // EQ
-        case 1:  cond_x = !CURRENT_STATE.FLAG_Z; break;                // NE
-        case 10: cond_x = !CURRENT_STATE.FLAG_N; break;                // GE
-        case 11: cond_x = CURRENT_STATE.FLAG_N && !CURRENT_STATE.FLAG_Z; break; // LT
-        case 12: cond_x = !CURRENT_STATE.FLAG_Z && !CURRENT_STATE.FLAG_N; break; // GT
-        case 13: cond_x = CURRENT_STATE.FLAG_N; break;                 // LE
+        case 0:  condition_met = CURRENT_STATE.FLAG_Z; break;                 // EQ
+        case 1:  condition_met = !CURRENT_STATE.FLAG_Z; break;                // NE
+        case 10: condition_met = !CURRENT_STATE.FLAG_N; break;                // GE
+        case 11: condition_met = CURRENT_STATE.FLAG_N && !CURRENT_STATE.FLAG_Z; break; // LT
+        case 12: condition_met = !CURRENT_STATE.FLAG_Z && !CURRENT_STATE.FLAG_N; break; // GT
+        case 13: condition_met = CURRENT_STATE.FLAG_N; break;                 // LE
     }
 
-    if (cond_x) {
+    if (condition_met) {
         NEXT_STATE.PC += inst->immr - 4;
     }
 }
