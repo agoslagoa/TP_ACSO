@@ -36,7 +36,7 @@ uint64_t execute(const Instruction* inst) {
         int64_t result = CURRENT_STATE.REGS[inst->Rn] + imm;
         NEXT_STATE.REGS[inst->Rd] = result;
         set_flags(result);
-    } else if (strcmp(inst->name, "SUBIS") == 0) {
+    } else if (strcmp(inst->name, "SUBS_IMM") == 0) {
         int64_t imm = (inst->shift == 1) ? (inst->imm << 12) : inst->imm;
         int64_t result = CURRENT_STATE.REGS[inst->Rn] - imm;
         NEXT_STATE.REGS[inst->Rd] = result;
