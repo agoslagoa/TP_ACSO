@@ -2,6 +2,7 @@
 #define INSTRUCTION_FUNCTIONS_H
 
 #include <stdint.h>
+
 #include "decode_core.h"
 #include "shell.h"
 

@@ -54,34 +54,34 @@ void add_immediate(instruction_t* inst)        { arithmetic_operation(inst, op_a
 void adds_immediate(instruction_t* inst)       { arithmetic_operation(inst, op_add); }
 void subs_immediate(instruction_t* inst)       { arithmetic_operation(inst, op_sub); }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 void multiply(instruction_t* inst) {
     NEXT_STATE.REGS[inst->Rd] = NEXT_STATE.REGS[inst->Rn] * NEXT_STATE.REGS[inst->Rm];
     set_x31();
-}
-
-//
-// ──────────────────────────────────────────────────────────────── LOGIC ──────
-//
-
-void ands_registers(instruction_t* inst) {
-    NEXT_STATE.REGS[inst->Rd] = NEXT_STATE.REGS[inst->Rm] & NEXT_STATE.REGS[inst->Rn];
-    change_flags(NEXT_STATE.REGS[inst->Rd]);
-    set_x31();
-}
-
-void eor_registers(instruction_t* inst) {
-    NEXT_STATE.REGS[inst->Rd] = NEXT_STATE.REGS[inst->Rm] ^ NEXT_STATE.REGS[inst->Rn];
-    set_x31();
-}
-
-void orr_registers(instruction_t* inst) {
-    NEXT_STATE.REGS[inst->Rd] = NEXT_STATE.REGS[inst->Rm] | NEXT_STATE.REGS[inst->Rn];
-    set_x31();
-}
-
-//
+@@ -101,20 +83,18 @@
 // ──────────────────────────────────────────────────────────────── SHIFT ──────
 //
+
 
 void shift(instruction_t* inst, uint32_t shift_type) {
     uint32_t shift = 64 - (uint32_t) inst->immr;
@@ -95,80 +95,11 @@ void shift(instruction_t* inst, uint32_t shift_type) {
     set_x31();
 }
 
+
 void logical_shift(instruction_t* inst) {
     shift(inst, inst->imms);
 }
-
-//
-// ──────────────────────────────────────────────────────────────── MEMORY ──────
-//
-
-void load_word(instruction_t* inst) {
-    uint64_t address = NEXT_STATE.REGS[inst->Rn] + inst->immr;
-    uint64_t val_lo = (uint64_t) mem_read_32(address);
-    uint64_t val_hi = (uint64_t) mem_read_32(address + 4) << 32;
-
-    NEXT_STATE.REGS[inst->Rd] = val_lo + val_hi;
-    set_x31();
-}
-
-void load_byte(instruction_t* inst) {
-    uint64_t address = NEXT_STATE.REGS[inst->Rn] + inst->immr;
-    NEXT_STATE.REGS[inst->Rd] = mem_read_32(address) & 0xFF;
-    set_x31();
-}
-
-void load_half(instruction_t* inst) {
-    uint64_t address = NEXT_STATE.REGS[inst->Rn] + inst->immr;
-    NEXT_STATE.REGS[inst->Rd] = mem_read_32(address) & 0xFFFF;
-    set_x31();
-}
-
-void store_word(instruction_t* inst) {
-    uint64_t address = NEXT_STATE.REGS[inst->Rn] + inst->immr;
-    uint64_t value = NEXT_STATE.REGS[inst->Rd];
-
-    uint64_t mask_lo = (uint64_t) generate_mask(32, 0);
-    uint64_t mask_hi = mask_lo << 32;
-
-    mem_write_32(address,     (uint32_t)(value & mask_lo));
-    mem_write_32(address + 4, (uint32_t)((value & mask_hi) >> 32));
-}
-
-void store_n_bits(instruction_t* inst, uint8_t n) {
-    uint64_t address = NEXT_STATE.REGS[inst->Rn] + inst->immr;
-    uint32_t prev = mem_read_32(address);
-
-    uint32_t mask_old = generate_mask(32 - n, n);
-    uint64_t mask_reg = (uint64_t) generate_mask(n, 0);
-    uint32_t new_bits = (uint32_t)(NEXT_STATE.REGS[inst->Rd] & mask_reg);
-
-    prev = (prev & mask_old) + new_bits;
-    mem_write_32(address, prev);
-}
-
-void store_byte(instruction_t* inst) {
-    store_n_bits(inst, 8);
-}
-
-void store_half(instruction_t* inst) {
-    store_n_bits(inst, 16);
-}
-
-//
-// ──────────────────────────────────────────────────────────────── BRANCHES ──────
-//
-
-void branch(instruction_t* inst) {
-    NEXT_STATE.PC += inst->immr - 4;
-}
-
-void branch_unconditional(instruction_t* inst) {
-    NEXT_STATE.PC += inst->immr - 4;
-}
-
-void branch_register(instruction_t* inst) {
-    NEXT_STATE.PC = NEXT_STATE.REGS[inst->Rn];
+@@ -192,18 +172,18 @@
 }
 
 void conditional_branch(instruction_t* inst) {
@@ -187,35 +118,7 @@ void conditional_branch(instruction_t* inst) {
         NEXT_STATE.PC += inst->immr - 4;
     }
 }
-
-void branch_conditional(instruction_t* inst) {
-    conditional_branch(inst);
-}
-
-void conditional_branch_zero(instruction_t* inst) {
-    if (NEXT_STATE.REGS[inst->Rd] == 0) {
-        NEXT_STATE.PC += inst->immr - 4;
-    }
-}
-
-void conditional_branch_nonzero(instruction_t* inst) {
-    if (NEXT_STATE.REGS[inst->Rd] != 0) {
-        NEXT_STATE.PC += inst->immr - 4;
-    }
-}
-
-void compare_and_branch_zero(instruction_t* inst) {
-    conditional_branch_zero(inst);
-}
-
-void compare_and_branch_nonzero(instruction_t* inst) {
-    conditional_branch_nonzero(inst);
-}
-
-//
-// ──────────────────────────────────────────────────────────────── MOVE ──────
-//
-
+@@ -239,4 +219,4 @@
 void move_zero(instruction_t* inst) {
     NEXT_STATE.REGS[inst->Rd] = inst->immr;
     set_x31();

@@ -1,6 +1,7 @@
 #include "decode_core.h"
 #include "opcodes.h"
 #include "shell.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdbool.h>
@@ -27,14 +28,21 @@ uint32_t get_values(instruction_t* inst, uint8_t move, uint16_t amount_ones) {
 
 void extract_base_register(instruction_t* inst) {
     inst->Rn = get_values(inst, 5, 5);
+
+
+
 }
 
 void extract_destination_register(instruction_t* inst) {
     inst->Rd = get_values(inst, 0, 5);
+
+
 }
 
 void extract_second_register(instruction_t* inst) {
     inst->Rm = get_values(inst, 16, 5);
+
+
 }
 
 void extract_signed_immediate(instruction_t* inst, uint8_t move_left, uint8_t len) {
@@ -46,10 +54,15 @@ void extract_signed_immediate(instruction_t* inst, uint8_t move_left, uint8_t le
 
 void extract_unsigned_immediate(instruction_t* inst, uint8_t move_left, uint8_t len) {
     inst->immr = get_values(inst, move_left, len);
+
+
+
 }
 
 void extract_shift_amount(instruction_t* inst) {
     inst->shift = get_values(inst, 22, 2);
+
+
 }
 
 void apply_branch_shift(instruction_t* inst) {
@@ -106,11 +119,22 @@ void format_move_immediate(instruction_t* inst) {
     extract_unsigned_immediate(inst, 5, 16);
 }
 
+
+
+
+
+
+
 void format_compare_and_branch(instruction_t* inst) {
     extract_destination_register(inst);
     extract_signed_immediate(inst, 5, 19);
     apply_branch_shift(inst);
 }
+
+
+
+
+
 
 //
 // ────────────────────────────────────────────────────────────── SETUP & EXECUTION ─────
@@ -136,38 +160,11 @@ bool set_instruction(instruction_t* inst, int32_t possible_opcodes[], uint8_t am
         if (inst->opcode == possible_opcodes[i]) {
             set_parameters(inst, type);
             inst->operation_func = type_functions[i];
+
+
             return true;
         }
     }
 
     return false;
-}
-
-bool decode(instruction_t* inst) {
-    if (inst->value == 0xD4400000) {
-        RUN_BIT = 0;
-        return false;
-    }
-    for (uint8_t i = 0; i < 10; i++) {
-        inst->opcode = get_values(inst, opcode_offsets[i], opcode_lens[i]);
-        printf("Checking opcode (type %d): extracted = %x\n", i, inst->opcode);
-        printf("Instruction value: 0x%08X\n", inst->value);
-
-        if (set_instruction(inst, (int32_t*) opcodes_types[i], type_amounts[i], type_functions[i], i + 1)) {
-            return true;
-        }
-    }
-
-    RUN_BIT = 0;
-    printf("Error: Unknown instruction, halting execution.\n");
-    return false;
-}
-
-
-void execute(instruction_t* inst) {
-    if (inst->operation_func != NULL) {
-        inst->operation_func(inst);
-    } else {
-        printf("Error: Trying to execute an undefined instruction.\n");
-    }
 }
