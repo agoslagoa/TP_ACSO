@@ -1,6 +1,7 @@
 #include "decoder.h"
 #include <string.h>
 #include <stdio.h>
+#include "shell.h"
 
 // Estructura auxiliar para patrones
 typedef struct {

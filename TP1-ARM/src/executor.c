@@ -83,9 +83,9 @@ uint64_t execute(const Instruction* inst) {
     }
 
     else if (strcmp(inst->name, "BR") == 0) {
-        inst->target_address = CURRENT_STATE.REGS[inst->Rn];
         return PC_DIRECT_JUMP;
     }
+
 
     else if (strcmp(inst->name, "B.cond") == 0) {
         int take_branch = 0;
