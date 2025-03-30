@@ -48,3 +48,5 @@ uint64_t execute_instruction(const Instruction* inst);
 void process_instruction();
 
 #endif // SIM_H
+
+// final version

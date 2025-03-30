@@ -83,3 +83,5 @@ void process_instruction() {
     // Ensure register XZR (register 31) is always zero.
     NEXT_STATE.REGS[31] = 0;
 }
+
+// final version
