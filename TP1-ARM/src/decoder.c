@@ -208,6 +208,7 @@ void extract_ldst(Instruction* inst, uint32_t raw) {
 
 Pattern patterns[] = {
     ENTRY(0xFFC00000, 0xB1000000, "ADDS_IMM", extract_adds_imm),
+    ENTRY(0xFFC00000, 0xB1400000, "SUBIS", extract_adds_imm),  
     ENTRY(0xFFE00000, 0x8B200000, "ADDS_EXT", extract_adds_ext),
     ENTRY(0xFFE00000, 0xEB000000, "SUBS_EXT", extract_subs_ext),
     ENTRY(0xFFE00000, 0xD2800000, "MOVZ",     extract_movz),
